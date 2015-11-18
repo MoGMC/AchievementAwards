@@ -1,10 +1,12 @@
 package com.fawkes.plugin.collectables.achievementawards;
 
 import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.Random;
 import java.util.UUID;
 
 import org.bukkit.Bukkit;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -18,8 +20,14 @@ public class AchievementAwardsPlugin extends JavaPlugin implements Listener {
 	CollectablesPlugin plugin;
 	Random rand = new Random();
 
+	HashMap<Integer, Award> awards;
+
 	@Override
 	public void onEnable() {
+
+		saveDefaultConfig();
+
+		initConfig();
 
 		// loads the plugin for API usage
 		plugin = this.getServer().getServicesManager().load(CollectablesPlugin.class);
@@ -43,42 +51,20 @@ public class AchievementAwardsPlugin extends JavaPlugin implements Listener {
 
 			count = plugin.getAwardCount(e.getUUID()) + 1;
 
-			if (count < 3) {
-				return;
+			for (int number : awards.keySet()) {
+				if (count < number) {
+					return;
 
-			}
+				}
 
-			if (!plugin.hasAward(uuid, "3awardaward")) {
-				plugin.giveAward(uuid, new QueryAward("3awardaward", System.currentTimeMillis(), getRandLevel()),
-						false);
-				Bukkit.getServer().dispatchCommand(getServer().getConsoleSender(),
-						"economy give " + Bukkit.getOfflinePlayer(uuid).getName() + " 300");
+				Award a = awards.get(number);
 
-			}
-
-			if (count < 5) {
-				return;
-
-			}
-
-			if (!plugin.hasAward(uuid, "5awardaward")) {
-				plugin.giveAward(uuid, new QueryAward("5awardaward", System.currentTimeMillis(), getRandLevel()),
-						false);
-				Bukkit.getServer().dispatchCommand(getServer().getConsoleSender(),
-						"economy give " + Bukkit.getOfflinePlayer(uuid).getName() + " 1000");
-
-			}
-
-			if (count < 10) {
-				return;
-
-			}
-
-			if (!plugin.hasAward(uuid, "10awardaward")) {
-				plugin.giveAward(uuid, new QueryAward("10awardaward", System.currentTimeMillis(), getRandLevel()),
-						false);
-				Bukkit.getServer().dispatchCommand(getServer().getConsoleSender(),
-						"economy give " + Bukkit.getOfflinePlayer(uuid).getName() + " 3000");
+				if (!plugin.hasAward(uuid, a.getId())) {
+					plugin.giveAward(uuid, new QueryAward(a.getId(), System.currentTimeMillis(), getRandLevel()),
+							false);
+					Bukkit.getServer().dispatchCommand(getServer().getConsoleSender(),
+							"economy give " + Bukkit.getOfflinePlayer(uuid).getName() + " " + a.getMoney());
+				}
 
 			}
 
@@ -86,6 +72,38 @@ public class AchievementAwardsPlugin extends JavaPlugin implements Listener {
 			Bukkit.getLogger().severe("Could not get plugin count or of the sort.");
 			sql.printStackTrace();
 			return;
+
+		}
+
+	}
+
+	private void initConfig() {
+
+		awards = new HashMap<Integer, Award>();
+
+		// reads config
+		FileConfiguration config = getConfig();
+
+		// loops thru all of the top level keys, gets values
+		for (String s : config.getKeys(false)) {
+			try {
+				// converts key to int
+				int number = Integer.valueOf(s);
+				// converts money to int
+				int money = Integer.valueOf(config.getString(s + ".money"));
+
+				// gets award id of award
+				String awardid = config.getString(s + ".awardid");
+
+				// puts into map
+				awards.put(number, new Award(awardid, money));
+
+			} catch (NumberFormatException e) {
+				// if the numbers screw up
+				Bukkit.getLogger().severe("Error in AchievementAwards config: Cannot parse numbers.");
+				continue;
+
+			}
 
 		}
 
