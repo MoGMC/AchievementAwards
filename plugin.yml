@@ -1,0 +1,3 @@
+name: AchievementAwards
+main: com.fawkes.plugin.collectables.achievementawards.AchievementAwardsPlugin
+version: 0.1
