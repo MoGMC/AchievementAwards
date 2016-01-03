@@ -61,7 +61,7 @@ public class AchievementAwardsPlugin extends JavaPlugin implements Listener {
 
 				if (!plugin.hasAward(uuid, a.getId())) {
 					plugin.giveAward(uuid, new QueryAward(a.getId(), System.currentTimeMillis(), getRandLevel()),
-							false);
+							false, true);
 					Bukkit.getServer().dispatchCommand(getServer().getConsoleSender(),
 							"economy give " + Bukkit.getOfflinePlayer(uuid).getName() + " " + a.getMoney());
 				}
